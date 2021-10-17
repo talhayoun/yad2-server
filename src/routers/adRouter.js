@@ -113,6 +113,7 @@ router.post("/ads/filter/extra", async (req, res) => {
                 }
             }
         );
+        console.log(filterAds)
         if (!filterAds) {
             return res.send({ err: "Failed to filter ads" })
         }
@@ -127,51 +128,59 @@ router.post("/ads/filter", async (req, res) => {
         console.log(req.body)
         let roomFrom = req.body.roomFrom || 0;
         let roomTo = req.body.roomTo || 99;
+        if (roomFrom === "all") roomFrom = 0;
+        if (roomTo === "all") roomTo = 99;
         let priceFrom = req.body.priceFrom || 0
         let priceTo = req.body.priceTo || 9999;
-        let assetType = req.body.assetType.length == 0 ? ["דירה", "דירת גן", "גג\\פנטהאוז", "דופלקס", "דירת נופש", "מרתף\\פרטר", "טריפלקס", "יחידת דיור", "החלפת דירות", "סטודיו\\לופט", "סאבלט",'בית פרטי\\קוט"ג', "דו משפחתי", "משק חקלאי\\נחלה", "משק עזר","מגרשים", "דיור מוגן", "בניין מגורים", "מחסן", "חניה", "קב' רכישה\\ זכות לנכס", "כללי"] : req.body.assetType;
+        let assetType = req.body.assetType.length === 0 ? ["דירה", "דירת גן", "גג\\פנטאהוז", "דופלקס", "דירת נופש", "מרתף\\פרטר", "טריפלקס", "יחידת דיור", "החלפת דירות", "סטודיו\\לופט", "סאבלט", 'בית פרטי\\קוט"ג', "דו משפחתי", "משק חקלאי\\נחלה", "משק עזר", "מגרשים", "דיור מוגן", "בניין מגורים", "מחסן", "חניה", "קב' רכישה\\ זכות לנכס", "כללי"] : req.body.assetType;
         let assetName = req.body.assetName || undefined;
-        console.log(roomFrom)
-        console.log(roomTo)
-        console.log(priceFrom)
-        console.log(priceTo)
-        console.log(assetType)
+        let city = req.body?.assetValue === "city" ? assetName : undefined;
+        let street = req.body?.assetValue === "city" ? undefined : assetName;
+        if (req.body?.assetValue === "street") {
+            street = req.body?.assetName.split(",")[1]?.trim();
+            city = req.body?.assetName.split(",")[0]
+        }
+        if (assetName === undefined) {
+            city = undefined,
+                street = undefined;
+        }
+        console.log(`roomFrom:, ${roomFrom} roomTo: ${roomTo} priceFrom: ${priceFrom} priceTo: ${priceTo}`)
+        console.log(`assetName: ${assetName} city: ${city} street: ${street}`)
+        console.log(`assetType:${assetType}`)
         let filterAd = await Ad.find({
-            roomsNumber:{
-                $gte:roomFrom,
-                $lte:roomTo
+            roomsNumber: {
+                $gte: roomFrom,
+                $lte: roomTo
             },
-            price:{
-                $gte:priceFrom,
-                $lte:priceTo
+            price: {
+                $gte: priceFrom,
+                $lte: priceTo
             },
-            // assetType,
-            $or:[
-                {city:assetName},
-                {street:assetName},
-            ]
+            assetType,
+            city: city,
+            street: street,
         })
         console.log(filterAd)
-        if(!filterAd)
-            return res.send({err: "failed to filter"})
+        if (!filterAd)
+            return res.send({ err: "failed to filter" })
 
-        res.send({filterAd})
-    } catch (error) {   
+        res.send({ filterAd })
+    } catch (error) {
         console.log(error)
-        res.send({err:"failed to filter"})
+        res.send({ err: "failed to filter" })
     }
 })
 
-router.post("/getAd", async(req, res) =>{
+router.post("/getAd", async (req, res) => {
     try {
-        const ad = await Ad.findOne({_id:req.body.ID});
-        if(!ad){
-            return res.send({err:"Failed to get ad"})
+        const ad = await Ad.findOne({ _id: req.body.ID });
+        if (!ad) {
+            return res.send({ err: "Failed to get ad" })
         }
-        res.send({ad});
+        res.send({ ad });
     } catch (error) {
-        res.send({err:"Failed to get add"})
-    }   
+        res.send({ err: "Failed to get add" })
+    }
 })
 
 module.exports = router;
